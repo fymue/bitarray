@@ -1,15 +1,25 @@
-#ifndef _bit_array_h_
-#define _bit_array_h_
+#ifndef BITARRAY_H_
+#define BITARRAY_H_
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <assert.h>
+
+#define ARRAY_TYPE uint64_t
+#define TYPE_SIZE sizeof(ARRAY_TYPE)
+#define BITS_PER_EL TYPE_SIZE*8
 
 typedef struct _bit_array {
   size_t size;
+  size_t _array_size;
   uint64_t *array;
 } bitarray;
+
+// figure out how many array elements are needed to store n_bits bits
+size_t __bitarray_size(size_t n_bits);
 
 // get bit at idx
 bool get_bit(bitarray *bit_array, size_t idx);
@@ -17,11 +27,14 @@ bool get_bit(bitarray *bit_array, size_t idx);
 // set bit at idx
 void set_bit(bitarray *bit_array, size_t idx);
 
-// set all bits to boolean value val
-void set_all_bits(bitarray *bit_array, bool val);
+// set bit at idx to val
+void set_bit_to(bitarray *bit_array, size_t idx, bool val);
 
 // set bits in range [from, to) to boolean value val
 void set_bit_range(bitarray *bit_array, size_t from, size_t to, bool val);
+
+// set all bits to boolean value val
+void set_all_bits(bitarray *bit_array, bool val);
 
 // flip/invert bit at idx
 void flip_bit(bitarray *bit_array, size_t idx);
@@ -37,6 +50,9 @@ size_t count_bits(bitarray *bit_array);
 
 // count true bits in range [from, to)
 size_t count_bit_range(bitarray *bit_array, size_t from, size_t to);
+
+// clear bit at idx
+void clear_bit(bitarray *bit_array, size_t idx);
 
 // clear/reset bits to "false" in range [from, to)
 void clear_bit_range(bitarray *bit_array, size_t from, size_t to);
@@ -55,7 +71,8 @@ void or_bits(bitarray *left, bitarray *right);
 // perform bitwise XOR (^=) on left bitarray in-place
 void xor_bits(bitarray *left, bitarray *right);
 
-// perform NOT (~) on bitarray in-place (same functionality as clear_all_bits function)
+// perform NOT (~) on bitarray in-place
+// (same functionality as clear_all_bits function)
 void not_bits(bitarray *bit_array);
 
 // perform rightshift (>>=) on bitarray in-place
@@ -72,14 +89,14 @@ void copy_bit_range(bitarray *src, bitarray *dest, size_t from, size_t to);
 
 // "constructor" functions
 
-// create bitarray with initial size
-bitarray* create_bitarray(size_t size);
+// create bitarray that holds n_bits bits (all unset/false)
+bitarray* create_bitarray(size_t n_bits);
 
-// create bitarray with initial size and all bits set to val
-bitarray* create_bitarray_with_val(size_t size, bool val);
+// create bitarray that holds n_bits bits (all set/true)
+bitarray* create_bitarray_with_val(size_t n_bits, bool val);
 
 // create bitarray from string (must consist only of 0 and 1)
-bitarray* create_bitarray_from_str(const char *str);
+bitarray* create_bitarray_from_str(const char *str, size_t str_len);
 
 // create bitarray from number
 bitarray* create_bitarray_from_num(__uint128_t num);
@@ -89,4 +106,4 @@ bitarray* create_bitarray_from_num(__uint128_t num);
 // delete bitarray and free allocated memory
 void delete_bitarray(bitarray *bit_array);
 
-#endif  // _bit_array_h_
+#endif  // BITARRAY_H_
