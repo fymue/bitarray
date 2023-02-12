@@ -18,7 +18,16 @@ bool get_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array->array && bit_array->size > 0);
   assert(idx >= 0 && idx < bit_array->size);
 
-  // TODO: implement this
+  // array index where bit at idx lives
+  size_t array_idx = idx / BITS_PER_EL;
+
+  // position of bit at array index/value
+  uint8_t offset = idx % BITS_PER_EL;
+
+  // left-shift 1 by offset and AND it with array value
+  // if the bit is set, this will result in a positive number (==true)
+  // if not, this will result i 0 (==false)
+  return bit_array->array[array_idx] & (((ARRAY_TYPE)1) << offset);
 }
 
 // set functions
@@ -28,7 +37,15 @@ void set_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array->array && bit_array->size > 0);
   assert(idx >= 0 && idx < bit_array->size);
 
-  // TODO: implement this
+  // array index where bit at idx lives
+  size_t array_idx = idx / BITS_PER_EL;
+
+  // position of bit at array index/value
+  uint8_t offset = idx % BITS_PER_EL;
+
+  // OR array value in-place with 1 leftshifted by offset (will set the bit)
+  bit_array->array[array_idx] |= (((ARRAY_TYPE)1) << offset);
+  assert(get_bit(bit_array, idx));
 }
 
 void set_bit_to(bitarray *bit_array, size_t idx, bool val) {
@@ -54,9 +71,10 @@ void set_bit_range(bitarray *bit_array, size_t from,
 void set_all_bits(bitarray *bit_array, bool val) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
+  ARRAY_TYPE _val = val ? ARRAY_TYPE_MAX : 0;
 
   for (size_t i = 0; i < bit_array->_array_size; i++) {
-    bit_array->array[i] = UINT64_MAX;
+    bit_array->array[i] = _val;
   }
 
   assert(count_bits(bit_array) == bit_array->size);
@@ -167,7 +185,7 @@ bitarray* create_set_bitarray(size_t n_bits) {
 
   // set all bits
   for (size_t i = 0; i < array_size; i++) {
-    b->array[i] = UINT64_MAX;
+    b->array[i] = ARRAY_TYPE_MAX;
   }
 
   b->size = n_bits;
@@ -181,7 +199,7 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
   assert(array_size > 0);
   bitarray *b = (bitarray*) malloc(sizeof(bitarray));
   assert(b);
-  
+
   b->array = (ARRAY_TYPE*) malloc(array_size * TYPE_SIZE);
   assert(b->array);
 
@@ -203,7 +221,7 @@ bitarray* create_bitarray_from_num(__uint128_t num) {
   assert(array_size > 0);
   bitarray *b = (bitarray*) malloc(sizeof(bitarray));
   assert(b);
-  
+
   b->array = (ARRAY_TYPE*) malloc(array_size * TYPE_SIZE);
   assert(b->array);
 
@@ -219,4 +237,33 @@ bitarray* create_bitarray_from_num(__uint128_t num) {
 void delete_bitarray(bitarray *bit_array) {
   assert(bit_array);
   free(bit_array->array);
+  free(bit_array);
+}
+
+void print_bitarray(bitarray *bit_array) {
+  assert(bit_array);
+  assert(bit_array->array);
+
+  for (size_t i = 0; i < bit_array->size; i++) {
+    printf("%d", get_bit(bit_array, i));
+  }
+  printf("\n");
+}
+
+char* make_string_from_bitarray(bitarray *bit_array) {
+  assert(bit_array);
+  assert(bit_array->array);
+
+  size_t size = bit_array->size + 1;
+  char* str = (char*) malloc(size * sizeof(char));
+
+  size_t i;
+  for (i = 0; i < bit_array->size; i++) {
+    str[i] = get_bit(bit_array, i) ? '1' : '0';
+  }
+
+  str[i] = '\0';
+  assert(strlen(str) == bit_array->size);
+
+  return str;
 }

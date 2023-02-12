@@ -9,8 +9,9 @@
 #include <assert.h>
 
 #define ARRAY_TYPE uint64_t
+#define ARRAY_TYPE_MAX UINT64_MAX
 #define TYPE_SIZE sizeof(ARRAY_TYPE)
-#define BITS_PER_EL TYPE_SIZE*8
+#define BITS_PER_EL (TYPE_SIZE * 8)
 
 typedef struct _bit_array {
   size_t size;
@@ -93,7 +94,7 @@ void copy_bit_range(bitarray *src, bitarray *dest, size_t from, size_t to);
 bitarray* create_bitarray(size_t n_bits);
 
 // create bitarray that holds n_bits bits (all set/true)
-bitarray* create_bitarray_with_val(size_t n_bits, bool val);
+bitarray* create_set_bitarray(size_t n_bits);
 
 // create bitarray from string (must consist only of 0 and 1)
 bitarray* create_bitarray_from_str(const char *str, size_t str_len);
@@ -105,5 +106,11 @@ bitarray* create_bitarray_from_num(__uint128_t num);
 
 // delete bitarray and free allocated memory
 void delete_bitarray(bitarray *bit_array);
+
+// print each bit of the bitarray
+void print_bitarray(bitarray *bit_array);
+
+// create a string from the bitarray
+char* make_string_from_bitarray(bitarray *bit_array);
 
 #endif  // BITARRAY_H_
