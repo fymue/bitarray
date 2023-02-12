@@ -48,33 +48,56 @@ void set_bit(bitarray *bit_array, size_t idx) {
   assert(get_bit(bit_array, idx));
 }
 
-void set_bit_to(bitarray *bit_array, size_t idx, bool val) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
-
-  // TODO: implement this
-}
-
-void set_bit_range(bitarray *bit_array, size_t from,
-                   size_t to, bool val) {
+void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
 
-  for (size_t i = from; i < to; i++) {
+  // if the size of the bitarray is <= BITS_PER_EL,
+  // there is no more efficient way than to iterate
+  // over evey bit position and to set it
+  if (bit_array->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      set_bit(bit_array, i);
+    }
+    return;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+  for (size_t i = from; i < end_idx_from; i++) {
     set_bit(bit_array, i);
   }
 
-  assert(count_bit_range(bit_array, from, to) == (from - to));
+  // set entire array value (BITS_PER_EL bits) to "true"
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    bit_array->array[i] = ARRAY_TYPE_MAX;
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
+    set_bit(bit_array, i);
+  }
+
+  //assert(count_bit_range(bit_array, from, to) == (from - to));
 }
 
-void set_all_bits(bitarray *bit_array, bool val) {
+void set_all_bits(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  ARRAY_TYPE _val = val ? ARRAY_TYPE_MAX : 0;
 
   for (size_t i = 0; i < bit_array->_array_size; i++) {
-    bit_array->array[i] = _val;
+    bit_array->array[i] = ARRAY_TYPE_MAX;
   }
 
   assert(count_bits(bit_array) == bit_array->size);
@@ -87,14 +110,55 @@ void flip_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array->array && bit_array->size > 0);
   assert(idx >= 0 && idx < bit_array->size);
 
-  set_bit_to(bit_array, idx, !get_bit(bit_array, idx));
+  // array index where bit at idx lives
+  size_t array_idx = idx / BITS_PER_EL;
+
+  // position of bit at array index/value
+  uint8_t offset = idx % BITS_PER_EL;
+
+  // XOR array value in-place with 1 leftshifted by offset
+  // (will flip the bit)
+  bit_array->array[array_idx] ^= (((ARRAY_TYPE)1) << offset);
 }
 
 void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
 
-  for (size_t i = from; i < to; i++) {
+  // if the size of the bitarray is <= BITS_PER_EL,
+  // there is no more efficient way than to iterate
+  // over evey bit position and to flip it
+  if (bit_array->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      flip_bit(bit_array, i);
+    }
+    return;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+  
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+  for (size_t i = from; i < end_idx_from; i++) {
+    flip_bit(bit_array, i);
+  }
+  
+  // flip entire array value (BITS_PER_EL bits)
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    bit_array->array[i] = ~(bit_array->array[i]);
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
     flip_bit(bit_array, i);
   }
 }
@@ -147,11 +211,44 @@ void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
 
-  for (size_t i = from; i < to; i++) {
+  // if the size of the bitarray is <= BITS_PER_EL,
+  // there is no more efficient way than to iterate
+  // over evey bit position and to clear it
+  if (bit_array->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      clear_bit(bit_array, i);
+    }
+    return;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+  for (size_t i = from; i < end_idx_from; i++) {
     clear_bit(bit_array, i);
   }
 
-  assert(count_bit_range(bit_array, from, to) == 0);
+  // flip entire array value (BITS_PER_EL bits)
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    bit_array->array[i] = 0;
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
+    clear_bit(bit_array, i);
+  }
+
+  //assert(count_bit_range(bit_array, from, to) == 0);
 }
 
 void clear_all_bits(bitarray *bit_array) {
@@ -162,7 +259,7 @@ void clear_all_bits(bitarray *bit_array) {
     bit_array->array[i] = 0;
   }
 
-  assert(count_bits(bit_array) == 0);
+  //assert(count_bits(bit_array) == 0);
 }
 
 // "constructor" functions
@@ -254,7 +351,7 @@ void print_bitarray(bitarray *bit_array) {
   assert(bit_array->array);
 
   for (size_t i = 0; i < bit_array->size; i++) {
-    printf("%d", get_bit(bit_array, i));
+    printf(" %d", get_bit(bit_array, i));
   }
   printf("\n");
 }

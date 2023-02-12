@@ -28,14 +28,11 @@ bool get_bit(bitarray *bit_array, size_t idx);
 // set bit at idx
 void set_bit(bitarray *bit_array, size_t idx);
 
-// set bit at idx to val
-void set_bit_to(bitarray *bit_array, size_t idx, bool val);
+// set bits in range [from, to) to "true"
+void set_bit_range(bitarray *bit_array, size_t from, size_t to);
 
-// set bits in range [from, to) to boolean value val
-void set_bit_range(bitarray *bit_array, size_t from, size_t to, bool val);
-
-// set all bits to boolean value val
-void set_all_bits(bitarray *bit_array, bool val);
+// set all bits to "true"
+void set_all_bits(bitarray *bit_array);
 
 // flip/invert bit at idx
 void flip_bit(bitarray *bit_array, size_t idx);
