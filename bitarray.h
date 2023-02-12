@@ -16,7 +16,7 @@
 typedef struct _bit_array {
   size_t size;
   size_t _array_size;
-  uint64_t *array;
+  ARRAY_TYPE *array;
 } bitarray;
 
 // figure out how many array elements are needed to store n_bits bits
@@ -109,5 +109,8 @@ void print_bitarray(bitarray *bit_array);
 
 // create a string from the bitarray (don't forget to free it at then end!)
 char* make_string_from_bitarray(bitarray *bit_array);
+
+// check if bits of left and right are equal (must be same size)
+bool equal_bits(bitarray *left, bitarray *right);
 
 #endif  // BITARRAY_H_

@@ -137,7 +137,7 @@ void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
 
   // array index where bit at "from" lives
   size_t array_idx_from = from / BITS_PER_EL;
-  
+
   // array index where bit at "to" lives
   size_t array_idx_to = to / BITS_PER_EL;
 
@@ -151,7 +151,7 @@ void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
   for (size_t i = from; i < end_idx_from; i++) {
     flip_bit(bit_array, i);
   }
-  
+
   // flip entire array value (BITS_PER_EL bits)
   // without iterating over every bit position
   for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
@@ -262,6 +262,89 @@ void clear_all_bits(bitarray *bit_array) {
   //assert(count_bits(bit_array) == 0);
 }
 
+// copy functions
+
+void copy_all_bits(bitarray *src, bitarray *dest) {
+  assert(src && dest);
+  if (!(dest->array)) {
+    dest->array = (ARRAY_TYPE*) malloc(src->_array_size * TYPE_SIZE);
+  }
+
+  if (dest->_array_size < src->_array_size) {
+    free(dest->array);
+    dest->array = (ARRAY_TYPE*) malloc(src->_array_size * TYPE_SIZE);
+    dest->_array_size = src->_array_size;
+  }
+
+  assert(src->_array_size == dest->_array_size);
+
+  for (size_t i = 0; i < src->_array_size; i++) {
+    dest->array[i] = src->array[i];
+  }
+
+  dest->size = src->size;
+}
+
+void copy_bit_range(bitarray *src, bitarray *dest,
+                    size_t from, size_t to) {
+  assert(src && dest);
+  if (!(dest->array) || dest->size < (to - from)) {
+    if (dest->array) free(dest->array);
+    size_t array_size = __bitarray_size(to - from);
+    dest->array = (ARRAY_TYPE*) malloc(array_size * TYPE_SIZE);
+    dest->_array_size = array_size;
+  }
+
+  dest->size = to - from;
+
+  if (src->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      if (get_bit(src, i)) {
+        set_bit(dest, i - from);
+      } else {
+        clear_bit(dest, i - from);
+      }
+    }
+    return;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+
+  for (size_t i = from; i < end_idx_from; i++) {
+    if (get_bit(src, i)) {
+      set_bit(dest, i);
+    } else {
+      clear_bit(dest, i);
+    }
+  }
+
+  // copy entire array value (BITS_PER_EL bits)
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    dest->array[i] = src->array[i];
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
+    if (get_bit(src, i)) {
+      set_bit(dest, i);
+    } else {
+      clear_bit(dest, i);
+    }
+  }
+}
+
 // "constructor" functions
 
 bitarray* create_bitarray(size_t n_bits) {
@@ -342,6 +425,7 @@ bitarray* create_bitarray_from_num(__uint128_t num) {
 // "destructor" functions
 void delete_bitarray(bitarray *bit_array) {
   assert(bit_array);
+  assert(bit_array->array);
   free(bit_array->array);
   free(bit_array);
 }
@@ -372,4 +456,17 @@ char* make_string_from_bitarray(bitarray *bit_array) {
   assert(strlen(str) == bit_array->size);
 
   return str;
+}
+
+bool equal_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size == right->size);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    if (left->array[i] != right->array[i]) {
+      return false;
+    }
+  }
+
+  return true;
 }
