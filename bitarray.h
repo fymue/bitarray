@@ -110,7 +110,7 @@ void delete_bitarray(bitarray *bit_array);
 // print each bit of the bitarray
 void print_bitarray(bitarray *bit_array);
 
-// create a string from the bitarray
+// create a string from the bitarray (don't forget to free it at then end!)
 char* make_string_from_bitarray(bitarray *bit_array);
 
 #endif  // BITARRAY_H_

@@ -131,7 +131,16 @@ void clear_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array->array && bit_array->size > 0);
   assert(idx >= 0 && idx < bit_array->size);
 
-  // TODO: implement this
+  // array index where bit at idx lives
+  size_t array_idx = idx / BITS_PER_EL;
+
+  // position of bit at array index/value
+  uint8_t offset = idx % BITS_PER_EL;
+
+  // AND array value in-place with 1 leftshifted by offset FLIPPED
+  // (the flip turns 100000 int 011111, which will clear the 0 bit after AND)
+  bit_array->array[array_idx] &= ~(((ARRAY_TYPE)1) << offset);
+  assert(!get_bit(bit_array, idx));
 }
 
 void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
