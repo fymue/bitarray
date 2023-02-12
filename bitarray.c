@@ -262,6 +262,120 @@ void clear_all_bits(bitarray *bit_array) {
   //assert(count_bits(bit_array) == 0);
 }
 
+// bitwise operations
+
+void and_bits_inplace(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  // need to know which array is bigger to avoid out of bounds access
+  size_t mx_i = left->_array_size < right->_array_size ?
+                left->_array_size : right->_array_size;
+
+  for (size_t i = 0; i < mx_i; i++) {
+    left->array[i] &= right->array[i];
+  }
+}
+
+void or_bits_inplace(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  // need to know which array is bigger to avoid out of bounds access
+  size_t mx_i = left->_array_size < right->_array_size ?
+                left->_array_size : right->_array_size;
+
+  for (size_t i = 0; i < mx_i; i++) {
+    left->array[i] |= right->array[i];
+  }
+}
+
+void xor_bits_inplace(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  // need to know which array is bigger to avoid out of bounds access
+  size_t mx_i = left->_array_size < right->_array_size ?
+                left->_array_size : right->_array_size;
+
+  for (size_t i = 0; i < mx_i; i++) {
+    left->array[i] ^= right->array[i];
+  }
+}
+
+bitarray* and_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  // need to know which array is bigger to avoid out of bounds access
+  size_t n_bits, mx_i;
+  if (left->size < right->size) {
+    mx_i = left->_array_size;
+    n_bits = left->size;
+  } else {
+    mx_i = right->_array_size;
+    n_bits = right->size;
+  }
+
+  bitarray *b = create_bitarray(n_bits);
+
+  for (size_t i = 0; i < mx_i; i++) {
+    b->array[i] = (left->array[i]) & (right->array[i]);
+  }
+
+  return b;
+}
+
+bitarray* or_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  // need to know which array is bigger to avoid out of bounds access
+  size_t n_bits, mx_i;
+  if (left->size < right->size) {
+    mx_i = left->_array_size;
+    n_bits = left->size;
+  } else {
+    mx_i = right->_array_size;
+    n_bits = right->size;
+  }
+
+  bitarray *b = create_bitarray(n_bits);
+
+  for (size_t i = 0; i < mx_i; i++) {
+    b->array[i] = (left->array[i]) | (right->array[i]);
+  }
+
+  return b;
+}
+
+bitarray* xor_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  // need to know which array is bigger to avoid out of bounds access
+  size_t n_bits, mx_i;
+  if (left->size < right->size) {
+    mx_i = left->_array_size;
+    n_bits = left->size;
+  } else {
+    mx_i = right->_array_size;
+    n_bits = right->size;
+  }
+
+  bitarray *b = create_bitarray(n_bits);
+
+  for (size_t i = 0; i < mx_i; i++) {
+    b->array[i] = (left->array[i]) ^ (right->array[i]);
+  }
+
+  return b;
+}
+
+void not_bits(bitarray *bit_array) {
+  flip_all_bits(bit_array);
+}
+
 // copy functions
 
 void copy_all_bits(bitarray *src, bitarray *dest) {
@@ -389,7 +503,7 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
   bitarray *b = (bitarray*) malloc(sizeof(bitarray));
   assert(b);
 
-  b->array = (ARRAY_TYPE*) malloc(array_size * TYPE_SIZE);
+  b->array = (ARRAY_TYPE*) calloc(array_size, TYPE_SIZE);
   assert(b->array);
 
   b->size = str_len;
@@ -397,8 +511,9 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
 
   for (size_t i = 0; i < str_len; i++) {
     assert(str[i] == '1' || str[i] == '0');
-    bool val = str[i] == '1';
-    set_bit(b, i);
+    if (str[i] == '1') {
+      set_bit(b, i);
+    }
   }
 
   return b;
@@ -435,7 +550,7 @@ void print_bitarray(bitarray *bit_array) {
   assert(bit_array->array);
 
   for (size_t i = 0; i < bit_array->size; i++) {
-    printf(" %d", get_bit(bit_array, i));
+    printf("%d", get_bit(bit_array, i));
   }
   printf("\n");
 }

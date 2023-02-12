@@ -58,19 +58,28 @@ void clear_bit_range(bitarray *bit_array, size_t from, size_t to);
 // clear/reset all bits to "false"
 void clear_all_bits(bitarray *bit_array);
 
-// inplace bitwise operations
+// bitwise operations
 
 // perform bitwise AND (&=) on left bitarray in-place
-void and_bits(bitarray *left, bitarray *right);
+void and_bits_inplace(bitarray *left, bitarray *right);
 
 // perform bitwise OR (|=) on left bitarray in-place
-void or_bits(bitarray *left, bitarray *right);
+void or_bits_inplace(bitarray *left, bitarray *right);
 
 // perform bitwise XOR (^=) on left bitarray in-place
-void xor_bits(bitarray *left, bitarray *right);
+void xor_bits_inplace(bitarray *left, bitarray *right);
+
+// perform bitwise AND (&=) and write result to a new bitarray
+bitarray* and_bits(bitarray *left, bitarray *right);
+
+// perform bitwise OR (|=) and write result to a new bitarray
+bitarray*  or_bits(bitarray *left, bitarray *right);
+
+// perform bitwise XOR (^=) and write result to a new bitarray
+bitarray* xor_bits(bitarray *left, bitarray *right);
 
 // perform NOT (~) on bitarray in-place
-// (same functionality as clear_all_bits function)
+// (same functionality as flip_all_bits function)
 void not_bits(bitarray *bit_array);
 
 // perform rightshift (>>=) on bitarray in-place
@@ -98,6 +107,9 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len);
 
 // create bitarray from number
 bitarray* create_bitarray_from_num(__uint128_t num);
+
+// convert bitarray (w/ max size of 128) to number
+__uint128_t convert_bitarray_to_num(bitarray* bit_array);
 
 // "destructor" function
 
