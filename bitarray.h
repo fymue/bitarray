@@ -83,10 +83,10 @@ bitarray* xor_bits(bitarray *left, bitarray *right);
 void not_bits(bitarray *bit_array);
 
 // perform rightshift (>>=) on bitarray in-place
-void shift_bits_right(bitarray *bit_array, size_t n);
+void right_shift_bits(bitarray *bit_array, size_t n);
 
 // perform left shift (<<=) in bitarray in-place
-void shift_bits_left(bitarray *bit_array, size_t n);
+void left_shift_bits(bitarray *bit_array, size_t n);
 
 // copy all bits from src to dest
 void copy_all_bits(bitarray *src, bitarray *dest);
@@ -116,11 +116,13 @@ __uint128_t convert_bitarray_to_num(bitarray* bit_array);
 // delete bitarray and free allocated memory
 void delete_bitarray(bitarray *bit_array);
 
-// print each bit of the bitarray
+// print each bit of the bitarray (idx 0 will be rightmost bit)
 void print_bitarray(bitarray *bit_array);
 
-// create a string from the bitarray (don't forget to free it at then end!)
-char* make_string_from_bitarray(bitarray *bit_array);
+// create a string from the bitarray;
+// idx 0 will be rightmost bit
+// (don't forget to free it at then end)
+char* create_string_from_bitarray(bitarray *bit_array);
 
 // check if bits of left and right are equal (must be same size)
 bool equal_bits(bitarray *left, bitarray *right);

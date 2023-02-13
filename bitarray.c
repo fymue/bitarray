@@ -376,6 +376,42 @@ void not_bits(bitarray *bit_array) {
   flip_all_bits(bit_array);
 }
 
+void right_shift_bits(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+  if (n <= 0) return;
+
+  // if there are still n free bits available, simply update size
+  size_t capacity = bit_array->_array_size * BITS_PER_EL;
+  size_t free_bits = capacity - bit_array->size;
+  if (free_bits >= n) {
+    bit_array->size += n;
+    return;
+  }
+
+  // calculate additional space needed to left shift by n
+  size_t additional = (n - free_bits) / BITS_PER_EL + 1;
+  size_t new_array_size = bit_array->_array_size + additional;
+
+  // make the current array holding all bits bigger
+  bit_array->array = (ARRAY_TYPE*) realloc(bit_array->array, new_array_size);
+
+  // zero the new additional memory so every bit is set to "false"
+  for (size_t i = bit_array->_array_size; i < new_array_size; i++) {
+    bit_array->array[i] = 0;
+  }
+
+  // update the sizes
+  bit_array->_array_size = new_array_size;
+  bit_array->size += n;
+}
+
+void left_shift_bits(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+  if (n <= 0) return;
+
+  // TODO: implement this
+}
+
 // copy functions
 
 void copy_all_bits(bitarray *src, bitarray *dest) {
@@ -549,25 +585,25 @@ void print_bitarray(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array);
 
-  for (size_t i = 0; i < bit_array->size; i++) {
+  for (size_t i = bit_array->size; i-- > 0;) {
     printf("%d", get_bit(bit_array, i));
   }
   printf("\n");
 }
 
-char* make_string_from_bitarray(bitarray *bit_array) {
+char* create_string_from_bitarray(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array);
 
   size_t size = bit_array->size + 1;
   char* str = (char*) malloc(size * sizeof(char));
 
-  size_t i;
-  for (i = 0; i < bit_array->size; i++) {
-    str[i] = get_bit(bit_array, i) ? '1' : '0';
+  size_t i, j;
+  for (j = 0, i = bit_array->size; i-- > 0; j++) {
+    str[j] = get_bit(bit_array, i) ? '1' : '0';
   }
 
-  str[i] = '\0';
+  str[j] = '\0';
   assert(strlen(str) == bit_array->size);
 
   return str;
