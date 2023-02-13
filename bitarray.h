@@ -58,7 +58,7 @@ void clear_bit_range(bitarray *bit_array, size_t from, size_t to);
 // clear/reset all bits to "false"
 void clear_all_bits(bitarray *bit_array);
 
-// bitwise operations
+// bitwise operations (in-place)
 
 // perform bitwise AND (&=) on left bitarray in-place
 void and_bits_inplace(bitarray *left, bitarray *right);
@@ -69,24 +69,35 @@ void or_bits_inplace(bitarray *left, bitarray *right);
 // perform bitwise XOR (^=) on left bitarray in-place
 void xor_bits_inplace(bitarray *left, bitarray *right);
 
-// perform bitwise AND (&=) and write result to a new bitarray
-bitarray* and_bits(bitarray *left, bitarray *right);
-
-// perform bitwise OR (|=) and write result to a new bitarray
-bitarray*  or_bits(bitarray *left, bitarray *right);
-
-// perform bitwise XOR (^=) and write result to a new bitarray
-bitarray* xor_bits(bitarray *left, bitarray *right);
-
 // perform NOT (~) on bitarray in-place
 // (same functionality as flip_all_bits function)
-void not_bits(bitarray *bit_array);
+void not_bits_inplace(bitarray *bit_array);
 
 // perform rightshift (>>=) on bitarray in-place
-void right_shift_bits(bitarray *bit_array, size_t n);
+void right_shift_bits_inplace(bitarray *bit_array, size_t n);
 
 // perform left shift (<<=) in bitarray in-place
-void left_shift_bits(bitarray *bit_array, size_t n);
+void left_shift_bits_inplace(bitarray *bit_array, size_t n);
+
+// bitwise operations
+
+// perform bitwise AND (&) and write result to a new bitarray
+bitarray* and_bits(bitarray *left, bitarray *right);
+
+// perform bitwise OR (|) and write result to a new bitarray
+bitarray*  or_bits(bitarray *left, bitarray *right);
+
+// perform bitwise XOR (^) and write result to a new bitarray
+bitarray* xor_bits(bitarray *left, bitarray *right);
+
+// returns a copy of bit_array flipped (~)
+bitarray* not_bits(bitarray *bit_array);
+
+// returns a copy of bit_array rightshifted (>>) by n
+bitarray* right_shift_bits(bitarray *bit_array, size_t n);
+
+// returns a copy of bit_array leftshifted (>>) by n
+bitarray* left_shift_bits(bitarray *bit_array, size_t n);
 
 // copy all bits from src to dest
 void copy_all_bits(bitarray *src, bitarray *dest);
@@ -95,6 +106,9 @@ void copy_all_bits(bitarray *src, bitarray *dest);
 void copy_bit_range(bitarray *src, bitarray *dest, size_t from, size_t to);
 
 // "constructor" functions
+
+// copy bitarray
+bitarray* copy_bitarray(bitarray *bit_array);
 
 // create bitarray that holds n_bits bits (all unset/false)
 bitarray* create_bitarray(size_t n_bits);
@@ -122,7 +136,7 @@ void print_bitarray(bitarray *bit_array);
 // create a string from the bitarray;
 // idx 0 will be rightmost bit
 // (don't forget to free it at then end)
-char* create_string_from_bitarray(bitarray *bit_array);
+char* create_str_from_bitarray(bitarray *bit_array);
 
 // check if bits of left and right are equal (must be same size)
 bool equal_bits(bitarray *left, bitarray *right);

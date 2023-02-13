@@ -168,7 +168,7 @@ void flip_all_bits(bitarray *bit_array) {
   assert(bit_array->array && bit_array->size > 0);
 
   for (size_t i = 0; i < bit_array->_array_size; i++) {
-    ~(bit_array->array[i]);
+    bit_array->array[i] = ~(bit_array->array[i]);
   }
 }
 
@@ -262,18 +262,22 @@ void clear_all_bits(bitarray *bit_array) {
   //assert(count_bits(bit_array) == 0);
 }
 
-// bitwise operations
+// bitwise operations (in-place)
 
 void and_bits_inplace(bitarray *left, bitarray *right) {
   assert(left && right);
   assert(left->size && right->size);
 
-  // need to know which array is bigger to avoid out of bounds access
-  size_t mx_i = left->_array_size < right->_array_size ?
-                left->_array_size : right->_array_size;
+  bitarray *_right = right;
 
-  for (size_t i = 0; i < mx_i; i++) {
-    left->array[i] &= right->array[i];
+  // adjust size of right bitarray to size of left bitarray
+  if (left->size > right->size) {
+    _right = right_shift_bits(right, left->size - right->size);
+    set_bit_range(_right, right->size, left->size);
+  }
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    left->array[i] &= _right->array[i];
   }
 }
 
@@ -281,12 +285,15 @@ void or_bits_inplace(bitarray *left, bitarray *right) {
   assert(left && right);
   assert(left->size && right->size);
 
-  // need to know which array is bigger to avoid out of bounds access
-  size_t mx_i = left->_array_size < right->_array_size ?
-                left->_array_size : right->_array_size;
+  bitarray *_right = right;
 
-  for (size_t i = 0; i < mx_i; i++) {
-    left->array[i] |= right->array[i];
+  // adjust size of right bitarray to size of left bitarray
+  if (left->size > right->size) {
+    _right = right_shift_bits(right, left->size - right->size);
+  }
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    left->array[i] |= _right->array[i];
   }
 }
 
@@ -294,89 +301,23 @@ void xor_bits_inplace(bitarray *left, bitarray *right) {
   assert(left && right);
   assert(left->size && right->size);
 
-  // need to know which array is bigger to avoid out of bounds access
-  size_t mx_i = left->_array_size < right->_array_size ?
-                left->_array_size : right->_array_size;
+  bitarray *_right = right;
 
-  for (size_t i = 0; i < mx_i; i++) {
-    left->array[i] ^= right->array[i];
+  // adjust size of right bitarray to size of left bitarray
+  if (left->size > right->size) {
+    _right = right_shift_bits(right, left->size - right->size);
+  }
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    left->array[i] ^= _right->array[i];
   }
 }
 
-bitarray* and_bits(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  // need to know which array is bigger to avoid out of bounds access
-  size_t n_bits, mx_i;
-  if (left->size < right->size) {
-    mx_i = left->_array_size;
-    n_bits = left->size;
-  } else {
-    mx_i = right->_array_size;
-    n_bits = right->size;
-  }
-
-  bitarray *b = create_bitarray(n_bits);
-
-  for (size_t i = 0; i < mx_i; i++) {
-    b->array[i] = (left->array[i]) & (right->array[i]);
-  }
-
-  return b;
-}
-
-bitarray* or_bits(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  // need to know which array is bigger to avoid out of bounds access
-  size_t n_bits, mx_i;
-  if (left->size < right->size) {
-    mx_i = left->_array_size;
-    n_bits = left->size;
-  } else {
-    mx_i = right->_array_size;
-    n_bits = right->size;
-  }
-
-  bitarray *b = create_bitarray(n_bits);
-
-  for (size_t i = 0; i < mx_i; i++) {
-    b->array[i] = (left->array[i]) | (right->array[i]);
-  }
-
-  return b;
-}
-
-bitarray* xor_bits(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  // need to know which array is bigger to avoid out of bounds access
-  size_t n_bits, mx_i;
-  if (left->size < right->size) {
-    mx_i = left->_array_size;
-    n_bits = left->size;
-  } else {
-    mx_i = right->_array_size;
-    n_bits = right->size;
-  }
-
-  bitarray *b = create_bitarray(n_bits);
-
-  for (size_t i = 0; i < mx_i; i++) {
-    b->array[i] = (left->array[i]) ^ (right->array[i]);
-  }
-
-  return b;
-}
-
-void not_bits(bitarray *bit_array) {
+void not_bits_inplace(bitarray *bit_array) {
   flip_all_bits(bit_array);
 }
 
-void right_shift_bits(bitarray *bit_array, size_t n) {
+void right_shift_bits_inplace(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
   if (n <= 0) return;
 
@@ -409,7 +350,7 @@ void right_shift_bits(bitarray *bit_array, size_t n) {
   bit_array->size += n;
 }
 
-void left_shift_bits(bitarray *bit_array, size_t n) {
+void left_shift_bits_inplace(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
   if (n <= 0) return;
 
@@ -440,10 +381,149 @@ void left_shift_bits(bitarray *bit_array, size_t n) {
   free(tmp);
 }
 
+// bitwise operations
+bitarray* and_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  bitarray *_right = right;
+
+  // adjust size of right bitarray to size of left bitarray
+  if (left->size > right->size) {
+    _right = right_shift_bits(right, left->size - right->size);
+    set_bit_range(_right, right->size, left->size);
+  }
+
+  bitarray *b = copy_bitarray(left);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    b->array[i] &= _right->array[i];
+  }
+
+  return b;
+}
+
+bitarray* or_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  bitarray *_right = right;
+
+  // adjust size of right bitarray to size of left bitarray
+  if (left->size > right->size) {
+    _right = right_shift_bits(right, left->size - right->size);
+  }
+
+  bitarray *b = copy_bitarray(left);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    b->array[i] |= _right->array[i];
+  }
+
+  return b;
+}
+
+bitarray* xor_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  bitarray *_right = right;
+
+  // adjust size of right bitarray to size of left bitarray
+  if (left->size > right->size) {
+    _right = right_shift_bits(right, left->size - right->size);
+  }
+
+  bitarray *b = copy_bitarray(left);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    b->array[i] ^= _right->array[i];
+  }
+
+  return b;
+}
+
+bitarray* not_bits(bitarray *bit_array) {
+  assert(bit_array && bit_array->size);
+
+  bitarray *b = copy_bitarray(bit_array);
+  flip_all_bits(b);
+
+  return b;
+}
+
+bitarray* right_shift_bits(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+
+  if (n <= 0) return bit_array;
+
+  bitarray *b = copy_bitarray(bit_array);
+
+  size_t capacity = b->_array_size * BITS_PER_EL;
+
+  // if there are still n free bits available,
+  // clear them and simply update size
+  size_t free_bits = capacity - b->size;
+  if (free_bits >= n) {
+    size_t new_size = b->size + n;
+    b->size = new_size;
+    clear_bit_range(b, b->size, new_size);
+    return b;
+  }
+
+  // calculate additional space needed to right shift by n
+  size_t additional = (n - free_bits) / BITS_PER_EL + 1;
+  size_t new_array_size = b->_array_size + additional;
+
+  // make the current array holding all bits bigger
+  b->array = (ARRAY_TYPE*) realloc(b->array, new_array_size);
+
+  // zero the new additional memory so every bit is set to "false"
+  for (size_t i = b->_array_size; i < new_array_size; i++) {
+    b->array[i] = 0;
+  }
+
+  // update the sizes
+  b->_array_size = new_array_size;
+  b->size += n;
+
+  return b;
+}
+
+bitarray* left_shift_bits(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+
+  if (n <= 0) return bit_array;
+
+  // find the idx after which the bitarray only contains 0s
+  // (e.g. from a previous right shift) and only copy bits till that idx
+  size_t end_idx = bit_array->size;
+  for (size_t i = bit_array->size; i-- > 0;) {
+    if (get_bit(bit_array, i)) {
+      end_idx = i + 1;
+      break;
+    }
+  }
+  size_t new_size = end_idx + n;
+
+  // make tmp bitarray and copy each bit of the
+  // current bitarray to tmp AFTER n 0 bits for the left shift
+  bitarray *b = create_bitarray(new_size);
+
+  for (size_t i = n, j = 0; j < end_idx; j++, i++) {
+    if (get_bit(bit_array, j)) {
+      set_bit(b, i);
+    }
+  }
+
+  return b;
+}
+
 // copy functions
 
 void copy_all_bits(bitarray *src, bitarray *dest) {
   assert(src && dest);
+
   if (!(dest->array)) {
     dest->array = (ARRAY_TYPE*) malloc(src->_array_size * TYPE_SIZE);
   }
@@ -466,6 +546,7 @@ void copy_all_bits(bitarray *src, bitarray *dest) {
 void copy_bit_range(bitarray *src, bitarray *dest,
                     size_t from, size_t to) {
   assert(src && dest);
+
   if (!(dest->array) || dest->size < (to - from)) {
     if (dest->array) free(dest->array);
     size_t array_size = __bitarray_size(to - from);
@@ -521,6 +602,15 @@ void copy_bit_range(bitarray *src, bitarray *dest,
       clear_bit(dest, i);
     }
   }
+}
+
+bitarray* copy_bitarray(bitarray *bit_array) {
+  assert(bit_array && bit_array->size >= 0);
+
+  bitarray *b = create_bitarray(bit_array->size);
+  copy_all_bits(bit_array, b);
+
+  return b;
 }
 
 // "constructor" functions
@@ -621,7 +711,7 @@ void print_bitarray(bitarray *bit_array) {
   printf("\n");
 }
 
-char* create_string_from_bitarray(bitarray *bit_array) {
+char* create_str_from_bitarray(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array);
 
