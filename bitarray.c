@@ -380,15 +380,19 @@ void right_shift_bits(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
   if (n <= 0) return;
 
-  // if there are still n free bits available, simply update size
   size_t capacity = bit_array->_array_size * BITS_PER_EL;
+
+  // if there are still n free bits available,
+  // clear them and simply update size
   size_t free_bits = capacity - bit_array->size;
   if (free_bits >= n) {
-    bit_array->size += n;
+    size_t new_size = bit_array->size + n;
+    bit_array->size = new_size;
+    clear_bit_range(bit_array, bit_array->size, new_size);
     return;
   }
 
-  // calculate additional space needed to left shift by n
+  // calculate additional space needed to right shift by n
   size_t additional = (n - free_bits) / BITS_PER_EL + 1;
   size_t new_array_size = bit_array->_array_size + additional;
 
@@ -409,7 +413,31 @@ void left_shift_bits(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
   if (n <= 0) return;
 
-  // TODO: implement this
+  // find the idx after which the bitarray only contains 0s
+  // (e.g. from a previous right shift) and only copy bits till that idx
+  size_t end_idx = bit_array->size;
+  for (size_t i = bit_array->size; i-- > 0;) {
+    if (get_bit(bit_array, i)) {
+      end_idx = i + 1;
+      break;
+    }
+  }
+  size_t new_size = end_idx + n;
+
+  // make tmp bitarray and copy each bit of the
+  // current bitarray to tmp AFTER n 0 bits for the left shift
+  bitarray *tmp = create_bitarray(new_size);
+
+  for (size_t i = n, j = 0; j < end_idx; j++, i++) {
+    if (get_bit(bit_array, j)) {
+      set_bit(tmp, i);
+    }
+  }
+
+  free(bit_array->array);
+  bit_array->array = tmp->array;
+  bit_array->size = tmp->size;
+  free(tmp);
 }
 
 // copy functions
@@ -545,10 +573,12 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
   b->size = str_len;
   b->_array_size = array_size;
 
-  for (size_t i = 0; i < str_len; i++) {
+  // add 1s and 0s in reverse order so the rightmost bit
+  // lives at idx 0 and so on...
+  for (size_t i = 0, j = str_len - 1; i < str_len; i++, j--) {
     assert(str[i] == '1' || str[i] == '0');
     if (str[i] == '1') {
-      set_bit(b, i);
+      set_bit(b, j);
     }
   }
 
