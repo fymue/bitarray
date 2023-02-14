@@ -1,5 +1,5 @@
-#ifndef BITARRAY_H_
-#define BITARRAY_H_
+#ifndef LIBBITARRAY_H_
+#define LIBBITARRAY_H_
 
 #include <stdio.h>
 #include <stdlib.h>
