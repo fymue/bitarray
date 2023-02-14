@@ -83,6 +83,7 @@ int execute_tests() {
   if (ans) printf("Test %d (copy bitarray) failed.\n", total_tests);
   fail_c += ans;
   delete_bitarray(b2);
+  delete_bitarray(b);
 
   // check AND
   b  = create_bitarray_from_str("100101101", 9);
@@ -126,6 +127,48 @@ int execute_tests() {
   delete_bitarray(res);
   delete_bitarray(ref);
 
+  delete_bitarray(b);
+  delete_bitarray(b2);
+
+  b = create_bitarray_from_num(123456);
+  ref = create_bitarray_from_str("11110001001000000", 17);
+
+  // not very clean, but sizes need to match for equal comparison
+  // (at least in debug mode),
+  // so increase the size of the ref bitarray to match the size
+  ref->size = BITS_PER_EL;
+  ans = !BITS_EQUAL(b, ref, false);
+  total_tests++;
+  if (ans) printf("Test %d (bitarray from num) failed.\n", total_tests);
+  fail_c += ans;
+
+  ARRAY_TYPE num = convert_bitarray_to_num(ref);
+  delete_bitarray(ref);
+  delete_bitarray(b);
+  ans = num == 123456;
+  total_tests++;
+  if (!ans) {
+    printf("Test %d (bitarray to num) failed.\n", total_tests);
+    fail_c += ans;
+  }
+
+  b = create_bitarray_from_num(9848293402894825);
+  ref = create_bitarray_from_str(
+    "100010111111001111100001111101111011000110000111101001", 54);
+
+  ref->size = BITS_PER_EL;
+  ans = !BITS_EQUAL(b, ref, false);
+  total_tests++;
+  if (ans) printf("Test %d (bitarray from num) failed.\n", total_tests);
+  fail_c += ans;
+
+  b =              create_bitarray_from_str("100101010101110101", 18);
+  b2 = create_bitarray_from_str("011110101011100101010101110101", 30);
+  append_bit_range(b2, b, 18, 30);
+  ans = !BITS_EQUAL(b, b2, false);
+  total_tests++;
+  if (ans) printf("Test %d (append bit range) failed.\n", total_tests);
+  fail_c += ans;
   delete_bitarray(b);
   delete_bitarray(b2);
 
