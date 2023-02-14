@@ -667,10 +667,10 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
 
   // add 1s and 0s in reverse order so the rightmost bit
   // lives at idx 0 and so on...
-  for (size_t i = 0, j = str_len - 1; i < str_len; i++, j--) {
+  for (size_t i = 0, j = str_len; j-- > 0; i++) {
     assert(str[i] == '1' || str[i] == '0');
-    if (str[i] == '1') {
-      set_bit(b, j);
+    if (str[j] == '1') {
+      set_bit(b, i);
     }
   }
 
