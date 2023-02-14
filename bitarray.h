@@ -14,9 +14,9 @@
 #define BITS_PER_EL (TYPE_SIZE * 8)
 
 typedef struct _bit_array {
-  size_t size;
-  size_t _array_size;
-  ARRAY_TYPE *array;
+  size_t size;         // number of bits this bitarray contains
+  size_t _array_size;  // number of elements the underlying array contains
+  ARRAY_TYPE *array;   // pointer to the start of the array
 } bitarray;
 
 // figure out how many array elements are needed to store n_bits bits

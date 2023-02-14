@@ -89,7 +89,7 @@ void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
     set_bit(bit_array, i);
   }
 
-  //assert(count_bit_range(bit_array, from, to) == (from - to));
+  assert(count_bit_range(bit_array, from, to) == (from - to));
 }
 
 void set_all_bits(bitarray *bit_array) {
@@ -178,14 +178,58 @@ size_t count_bits(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
 
-  // TODO: implement this
+  size_t count = 0;
+  for (size_t i = 0; i < bit_array->_array_size; i++) {
+    // use machine-optimized popcount function for max speed
+    count += __builtin_popcountll(bit_array->array[i]);
+  }
+
+  return count;
 }
 
 size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
 
-  // TODO: implement this
+  size_t count = 0;
+  // if the size of the bitarray is <= BITS_PER_EL,
+  // there is no more efficient way than to iterate
+  // over evey bit position and to count it
+  if (bit_array->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      count += get_bit(bit_array, i);
+    }
+    return count;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+  for (size_t i = from; i < end_idx_from; i++) {
+    count += get_bit(bit_array, i);
+  }
+
+  // get popcount entire array value
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    count += __builtin_popcountll(bit_array->array[i]);
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
+    count += get_bit(bit_array, i);
+  }
+
+  return count;
 }
 
 // clear functions
@@ -248,7 +292,7 @@ void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
     clear_bit(bit_array, i);
   }
 
-  //assert(count_bit_range(bit_array, from, to) == 0);
+  assert(count_bit_range(bit_array, from, to) == 0);
 }
 
 void clear_all_bits(bitarray *bit_array) {
@@ -259,7 +303,7 @@ void clear_all_bits(bitarray *bit_array) {
     bit_array->array[i] = 0;
   }
 
-  //assert(count_bits(bit_array) == 0);
+  assert(count_bits(bit_array) == 0);
 }
 
 // bitwise operations (in-place)
