@@ -56,7 +56,7 @@ void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
   // over evey bit position and to set it
-  if (bit_array->size <= BITS_PER_EL) {
+  if (bit_array->size <= BITS_PER_EL || (to - from) <= BITS_PER_EL) {
     for (size_t i = from; i < to; i++) {
       set_bit(bit_array, i);
     }
@@ -90,7 +90,7 @@ void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
     set_bit(bit_array, i);
   }
 
-  assert(count_bit_range(bit_array, from, to) == (from - to));
+  assert(count_bit_range(bit_array, from, to) == (to - from));
 }
 
 void set_all_bits(bitarray *bit_array) {
@@ -102,9 +102,13 @@ void set_all_bits(bitarray *bit_array) {
   }
 
   // clear the bits after n_bits so only bits < n_bits are set
-  size_t free_bits = bit_array->size % BITS_PER_EL;
-  size_t capacity = bit_array->size + free_bits;
-  clear_bit_range(bit_array, bit_array->size, capacity);
+  size_t capacity = bit_array->_array_size * BITS_PER_EL;
+  size_t size = bit_array->size;
+
+  // temporarily increase size to capacity (this is safe here)
+  bit_array->size = capacity;
+  clear_bit_range(bit_array, size, capacity);
+  bit_array->size = size;  // change it back
 
   assert(count_bits(bit_array) == bit_array->size);
 }
@@ -135,7 +139,7 @@ void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
   // over evey bit position and to flip it
-  if (bit_array->size <= BITS_PER_EL) {
+  if (bit_array->size <= BITS_PER_EL || (to - from) <= BITS_PER_EL) {
     for (size_t i = from; i < to; i++) {
       flip_bit(bit_array, i);
     }
@@ -177,6 +181,13 @@ void flip_all_bits(bitarray *bit_array) {
   for (size_t i = 0; i < bit_array->_array_size; i++) {
     bit_array->array[i] = ~(bit_array->array[i]);
   }
+
+  // keep free bits cleared
+  size_t capacity = bit_array->_array_size * BITS_PER_EL;
+  size_t size = bit_array->size;
+  bit_array->size = capacity;
+  clear_bit_range(bit_array, size, capacity);
+  bit_array->size = size;
 }
 
 // count functions
@@ -203,7 +214,7 @@ size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
   // over evey bit position and to count it
-  if (bit_array->size <= BITS_PER_EL) {
+  if (bit_array->size <= BITS_PER_EL || (to - from) <= BITS_PER_EL) {
     for (size_t i = from; i < to; i++) {
       count += get_bit(bit_array, i);
     }
@@ -267,7 +278,7 @@ void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
   // over evey bit position and to clear it
-  if (bit_array->size <= BITS_PER_EL) {
+  if (bit_array->size <= BITS_PER_EL || (to - from) <= BITS_PER_EL) {
     for (size_t i = from; i < to; i++) {
       clear_bit(bit_array, i);
     }
@@ -501,7 +512,7 @@ void copy_bit_range(bitarray *src, bitarray *dest,
 
   dest->size = to - from;
 
-  if (src->size <= BITS_PER_EL) {
+  if (src->size <= BITS_PER_EL || (to - from) <= BITS_PER_EL) {
     for (size_t i = from; i < to; i++) {
       if (get_bit(src, i)) {
         set_bit(dest, i - from);
@@ -630,9 +641,12 @@ bitarray* create_set_bitarray(size_t n_bits) {
   b->_array_size = array_size;
 
   // clear the bits after n_bits so only bits < n_bits are set
-  size_t free_bits = n_bits % BITS_PER_EL;
-  size_t capacity = n_bits + free_bits;
+  size_t capacity = b->_array_size * BITS_PER_EL;
+  b->size = capacity;
+
+  // temporarily increase size to capacity (this is safe here)
   clear_bit_range(b, n_bits, capacity);
+  b->size = n_bits;  // change it back
 
   assert(count_bits(b) == b->size);
 
