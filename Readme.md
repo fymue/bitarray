@@ -15,7 +15,9 @@ Unlike e.g. `std::bitset`, this bitarray implementation is dynamic, meaning the 
 
 ## Installation/Usage
 
-This repo provides three installation methods:
+This repo provides **three** installation methods:
+
+### Method 1
 
 You can directly include `bitarray.h` into your `.c` file as a header-only "library". Simply add `#include "bitarray.h"` at the top of your `.c` file and compile it:
 
@@ -25,10 +27,12 @@ gcc -o mybinary -I/path/to/dir/of/bitarray.h main.c
 
 It is recommended to also add the `-march=native` option to leverage optimized functions/assembly instructions for your specific machine.
 
+### Method 2
+
 Alternatively you can produce an `bitarray.o` file  by executing the command
 
 ```
-make
+make default
 ```
 
 which you can simply link/combine with your binary:
@@ -36,6 +40,8 @@ which you can simply link/combine with your binary:
 ```
 gcc -o mybinary main.c path/to/bitarray.o
 ```
+
+### Method 3
 
 The 3rd option is to create a shared library with the command
 
@@ -55,6 +61,8 @@ To avoid linker errors, make sure to add the path where the `libbitarray.so` fil
 LD_LIBRARY_PATH=/path/to/dir/of/libbitarray.so:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 ```
+
+By default, no bounds checking is performed to ensure maximum speed/performance. However, if you compile/link using the `Makefile` targets `debug` instead of `default` or `debug_shared` instead of `shared`, `assert` statements will be triggered if you attempt to access an out-of-bounds bit.
 
 ## Contributing
 
