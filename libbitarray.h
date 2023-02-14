@@ -149,4 +149,4 @@ char* create_str_from_bitarray(bitarray *bit_array);
 // check if bits of left and right are equal (must be same size)
 bool equal_bits(bitarray *left, bitarray *right);
 
-#endif  // BITARRAY_H_
+#endif  // LIBBITARRAY_H_

@@ -51,6 +51,8 @@ void set_bit(bitarray *bit_array, size_t idx) {
 void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
+  assert(from >= 0);
+  assert(to <= bit_array->size);
 
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
@@ -100,6 +102,11 @@ void set_all_bits(bitarray *bit_array) {
     bit_array->array[i] = ARRAY_TYPE_MAX;
   }
 
+  // clear the bits after n_bits so only bits < n_bits are set
+  size_t free_bits = bit_array->size % BITS_PER_EL;
+  size_t capacity = bit_array->size + free_bits;
+  clear_bit_range(bit_array, bit_array->size, capacity);
+
   assert(count_bits(bit_array) == bit_array->size);
 }
 
@@ -124,6 +131,8 @@ void flip_bit(bitarray *bit_array, size_t idx) {
 void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
+  assert(from >= 0);
+  assert(to <= bit_array->size);
 
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
@@ -190,6 +199,8 @@ size_t count_bits(bitarray *bit_array) {
 size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
+  assert(from >= 0);
+  assert(to <= bit_array->size);
 
   size_t count = 0;
   // if the size of the bitarray is <= BITS_PER_EL,
@@ -254,6 +265,8 @@ void clear_bit(bitarray *bit_array, size_t idx) {
 void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
+  assert(from >= 0);
+  assert(to <= bit_array->size);
 
   // if the size of the bitarray is <= BITS_PER_EL,
   // there is no more efficient way than to iterate
@@ -481,11 +494,13 @@ void copy_all_bits(bitarray *src, bitarray *dest) {
 void copy_bit_range(bitarray *src, bitarray *dest,
                     size_t from, size_t to) {
   assert(src && dest);
+  assert(from >= 0);
+  assert(to <= src->size);
 
   if (!(dest->array) || dest->size < (to - from)) {
     if (dest->array) free(dest->array);
     size_t array_size = __bitarray_size(to - from);
-    dest->array = (ARRAY_TYPE*) malloc(array_size * TYPE_SIZE);
+    dest->array = (ARRAY_TYPE*) calloc(array_size, TYPE_SIZE);
     dest->_array_size = array_size;
   }
 
@@ -550,6 +565,8 @@ void append_all_bits(bitarray *src, bitarray *dest) {
 void append_bit_range(bitarray *src, bitarray *dest,
                       size_t from, size_t to) {
   assert(src && dest);
+  assert(from >= 0);
+  assert(to <= src->size);
 
   if (!(src->size)) return;
 
@@ -596,6 +613,8 @@ bitarray* create_bitarray(size_t n_bits) {
   b->size = n_bits;
   b->_array_size = array_size;
 
+  assert(count_bits(b) == 0);
+
   return b;
 }
 
@@ -615,6 +634,13 @@ bitarray* create_set_bitarray(size_t n_bits) {
 
   b->size = n_bits;
   b->_array_size = array_size;
+
+  // clear the bits after n_bits so only bits < n_bits are set
+  size_t free_bits = n_bits % BITS_PER_EL;
+  size_t capacity = n_bits + free_bits;
+  clear_bit_range(b, n_bits, capacity);
+
+  assert(count_bits(b) == b->size);
 
   return b;
 }
