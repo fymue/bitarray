@@ -675,22 +675,25 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
   return b;
 }
 
-bitarray* create_bitarray_from_num(__uint128_t num) {
-  size_t n_bits = sizeof(num);
-  size_t array_size = __bitarray_size(n_bits);
-  assert(array_size > 0);
+bitarray* create_bitarray_from_num(ARRAY_TYPE num) {
   bitarray *b = (bitarray*) malloc(sizeof(bitarray));
   assert(b);
 
-  b->array = (ARRAY_TYPE*) malloc(array_size * TYPE_SIZE);
+  b->array = (ARRAY_TYPE*) malloc(TYPE_SIZE);
   assert(b->array);
 
-  b->size = n_bits;
-  b->_array_size = array_size;
+  b->array[0] = num;
 
-  // TODO: figure out how to access each bit of num and add it to b
+  b->size = BITS_PER_EL;
+  b->_array_size = 1;
 
   return b;
+}
+
+ARRAY_TYPE convert_bitarray_to_num(bitarray* bit_array) {
+  assert(bit_array);
+  assert(bit_array->size > 0 && bit_array->size <= BITS_PER_EL);
+  return bit_array->array[0];
 }
 
 // "destructor" functions

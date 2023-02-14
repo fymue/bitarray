@@ -100,9 +100,11 @@ bitarray* right_shift_bits(bitarray *bit_array, size_t n);
 bitarray* left_shift_bits(bitarray *bit_array, size_t n);
 
 // copy all bits from src to dest
+// (comparable to what you would expect "dest = src" to do)
 void copy_all_bits(bitarray *src, bitarray *dest);
 
 // copy bits in range [from, to] from src to dest
+// (comparable to what you would expect "dest = src[from:to]" to do)
 void copy_bit_range(bitarray *src, bitarray *dest, size_t from, size_t to);
 
 // "constructor" functions
@@ -120,10 +122,10 @@ bitarray* create_set_bitarray(size_t n_bits);
 bitarray* create_bitarray_from_str(const char *str, size_t str_len);
 
 // create bitarray from number
-bitarray* create_bitarray_from_num(__uint128_t num);
+bitarray* create_bitarray_from_num(ARRAY_TYPE num);
 
-// convert bitarray (w/ max size of 128) to number
-__uint128_t convert_bitarray_to_num(bitarray* bit_array);
+// convert bitarray (with max size of BITS_PER_EL bits) to number
+ARRAY_TYPE convert_bitarray_to_num(bitarray* bit_array);
 
 // "destructor" function
 
