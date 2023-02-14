@@ -14,5 +14,8 @@ debug: libbitarray.c libbitarray.h
 debug_shared: libbitarray.c libbitarray.h
 	$(CC) $(DEBUGFLAGS) -fPIC -shared -o libbitarray.so libbitarray.c
 
+test: bitarray_test.c
+	$(CC) $(DEBUGFLAGS) -o test bitarray_test.c
+
 clean:
-	rm -f *.o *.so
+	rm -f *.o *.so test

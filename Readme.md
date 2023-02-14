@@ -64,6 +64,12 @@ export LD_LIBRARY_PATH
 
 By default, no bounds checking is performed to ensure maximum speed/performance. However, if you compile/link using the `Makefile` targets `debug` instead of `default` or `debug_shared` instead of `shared`, `assert` statements will be triggered if you attempt to access an out-of-bounds bit.
 
+You can also run a small test program to check if everything works by executing the command
+ 
+```
+make test && ./test
+```
+
 ## Contributing
 
 I primarily wrote this implementation for practice reasons, so please feel free to open issues if you encounter any bugs or other problems. 
