@@ -107,6 +107,12 @@ void copy_all_bits(bitarray *src, bitarray *dest);
 // (comparable to what you would expect "dest = src[from:to]" to do)
 void copy_bit_range(bitarray *src, bitarray *dest, size_t from, size_t to);
 
+// appends all bits from src to dest
+void append_all_bits(bitarray *src, bitarray *dest);
+
+// appends bits in range [from, to] from src to dest
+void append_bit_range(bitarray *src, bitarray *dest, size_t from, size_t to);
+
 // "constructor" functions
 
 // copy bitarray
