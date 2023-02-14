@@ -156,7 +156,7 @@ inline size_t __bitarray_size(size_t n_bits) {
      be too big by 1; but that's ok since only 8 additional bytes
      will be allocated
   */
-  assert(n_bits >= 0);
+  assert(n_bits > 0);
 
   return n_bits / (TYPE_SIZE * 8) + 1;
 }
@@ -165,7 +165,7 @@ inline size_t __bitarray_size(size_t n_bits) {
 bool get_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
+  assert(idx < bit_array->size);
 
   // array index where bit at idx lives
   size_t array_idx = idx / BITS_PER_EL;
@@ -184,7 +184,7 @@ bool get_bit(bitarray *bit_array, size_t idx) {
 void set_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
+  assert(idx < bit_array->size);
 
   // array index where bit at idx lives
   size_t array_idx = idx / BITS_PER_EL;
@@ -200,7 +200,6 @@ void set_bit(bitarray *bit_array, size_t idx) {
 void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(from >= 0);
   assert(to <= bit_array->size);
 
   // if the size of the bitarray is <= BITS_PER_EL,
@@ -264,7 +263,7 @@ void set_all_bits(bitarray *bit_array) {
 void flip_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
+  assert(idx < bit_array->size);
 
   // array index where bit at idx lives
   size_t array_idx = idx / BITS_PER_EL;
@@ -280,7 +279,6 @@ void flip_bit(bitarray *bit_array, size_t idx) {
 void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(from >= 0);
   assert(to <= bit_array->size);
 
   // if the size of the bitarray is <= BITS_PER_EL,
@@ -348,7 +346,6 @@ size_t count_bits(bitarray *bit_array) {
 size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(from >= 0);
   assert(to <= bit_array->size);
 
   size_t count = 0;
@@ -397,7 +394,7 @@ size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
 void clear_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
+  assert(idx < bit_array->size);
 
   // array index where bit at idx lives
   size_t array_idx = idx / BITS_PER_EL;
@@ -414,7 +411,6 @@ void clear_bit(bitarray *bit_array, size_t idx) {
 void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
-  assert(from >= 0);
   assert(to <= bit_array->size);
 
   // if the size of the bitarray is <= BITS_PER_EL,
@@ -643,7 +639,6 @@ void copy_all_bits(bitarray *src, bitarray *dest) {
 void copy_bit_range(bitarray *src, bitarray *dest,
                     size_t from, size_t to) {
   assert(src && dest);
-  assert(from >= 0);
   assert(to <= src->size);
 
   if (!(dest->array) || dest->size < (to - from)) {
@@ -714,7 +709,6 @@ void append_all_bits(bitarray *src, bitarray *dest) {
 void append_bit_range(bitarray *src, bitarray *dest,
                       size_t from, size_t to) {
   assert(src && dest);
-  assert(from >= 0);
   assert(to <= src->size);
 
   if (!(src->size)) return;
@@ -739,7 +733,7 @@ void append_bit_range(bitarray *src, bitarray *dest,
 }
 
 bitarray* copy_bitarray(bitarray *bit_array) {
-  assert(bit_array && bit_array->size >= 0);
+  assert(bit_array && bit_array->size > 0);
 
   bitarray *b = create_bitarray(bit_array->size);
   copy_all_bits(bit_array, b);
