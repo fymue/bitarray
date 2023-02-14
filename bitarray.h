@@ -19,7 +19,8 @@ typedef struct _bit_array {
   ARRAY_TYPE *array;   // pointer to the start of the array
 } bitarray;
 
-inline size_t __bitarray_size(size_t n_bits) {
+// figure out how many array elements are needed to store n_bits bits
+size_t __bitarray_size(size_t n_bits) {
   /*
      calculate number of array elements needed to fit n_bits bits;
      if n_bits % (TYPE_SIZE * 8) == 0, the calculated size will 
@@ -49,150 +50,9 @@ bool get_bit(bitarray *bit_array, size_t idx) {
   return bit_array->array[array_idx] & (((ARRAY_TYPE)1) << offset);
 }
 
-// set functions
-
-void set_bit(bitarray *bit_array, size_t idx) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
-
-  // array index where bit at idx lives
-  size_t array_idx = idx / BITS_PER_EL;
-
-  // position of bit at array index/value
-  uint8_t offset = idx % BITS_PER_EL;
-
-  // OR array value in-place with 1 leftshifted by offset (will set the bit)
-  bit_array->array[array_idx] |= (((ARRAY_TYPE)1) << offset);
-  assert(get_bit(bit_array, idx));
-}
-
-void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-
-  // if the size of the bitarray is <= BITS_PER_EL,
-  // there is no more efficient way than to iterate
-  // over evey bit position and to set it
-  if (bit_array->size <= BITS_PER_EL) {
-    for (size_t i = from; i < to; i++) {
-      set_bit(bit_array, i);
-    }
-    return;
-  }
-
-  // array index where bit at "from" lives
-  size_t array_idx_from = from / BITS_PER_EL;
-
-  // array index where bit at "to" lives
-  size_t array_idx_to = to / BITS_PER_EL;
-
-  // position of "from" bit at array index/value
-  uint8_t offset_from = from % BITS_PER_EL;
-
-  // position of "to" bit at array index/value
-  uint8_t offset_to = to % BITS_PER_EL;
-
-  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
-  for (size_t i = from; i < end_idx_from; i++) {
-    set_bit(bit_array, i);
-  }
-
-  // set entire array value (BITS_PER_EL bits) to "true"
-  // without iterating over every bit position
-  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
-    bit_array->array[i] = ARRAY_TYPE_MAX;
-  }
-
-  for (size_t i = to - offset_to; i < to; i++) {
-    set_bit(bit_array, i);
-  }
-
-  assert(count_bit_range(bit_array, from, to) == (from - to));
-}
-
-void set_all_bits(bitarray *bit_array) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-
-  for (size_t i = 0; i < bit_array->_array_size; i++) {
-    bit_array->array[i] = ARRAY_TYPE_MAX;
-  }
-
-  assert(count_bits(bit_array) == bit_array->size);
-}
-
-// flip/invert functions
-
-void flip_bit(bitarray *bit_array, size_t idx) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-  assert(idx >= 0 && idx < bit_array->size);
-
-  // array index where bit at idx lives
-  size_t array_idx = idx / BITS_PER_EL;
-
-  // position of bit at array index/value
-  uint8_t offset = idx % BITS_PER_EL;
-
-  // XOR array value in-place with 1 leftshifted by offset
-  // (will flip the bit)
-  bit_array->array[array_idx] ^= (((ARRAY_TYPE)1) << offset);
-}
-
-void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-
-  // if the size of the bitarray is <= BITS_PER_EL,
-  // there is no more efficient way than to iterate
-  // over evey bit position and to flip it
-  if (bit_array->size <= BITS_PER_EL) {
-    for (size_t i = from; i < to; i++) {
-      flip_bit(bit_array, i);
-    }
-    return;
-  }
-
-  // array index where bit at "from" lives
-  size_t array_idx_from = from / BITS_PER_EL;
-
-  // array index where bit at "to" lives
-  size_t array_idx_to = to / BITS_PER_EL;
-
-  // position of "from" bit at array index/value
-  uint8_t offset_from = from % BITS_PER_EL;
-
-  // position of "to" bit at array index/value
-  uint8_t offset_to = to % BITS_PER_EL;
-
-  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
-  for (size_t i = from; i < end_idx_from; i++) {
-    flip_bit(bit_array, i);
-  }
-
-  // flip entire array value (BITS_PER_EL bits)
-  // without iterating over every bit position
-  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
-    bit_array->array[i] = ~(bit_array->array[i]);
-  }
-
-  for (size_t i = to - offset_to; i < to; i++) {
-    flip_bit(bit_array, i);
-  }
-}
-
-void flip_all_bits(bitarray *bit_array) {
-  assert(bit_array);
-  assert(bit_array->array && bit_array->size > 0);
-
-  for (size_t i = 0; i < bit_array->_array_size; i++) {
-    bit_array->array[i] = ~(bit_array->array[i]);
-  }
-}
-
 // count functions
 
+// count all true bits
 size_t count_bits(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
@@ -206,6 +66,7 @@ size_t count_bits(bitarray *bit_array) {
   return count;
 }
 
+// count true bits in range [from, to)
 size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
@@ -251,8 +112,157 @@ size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
   return count;
 }
 
+// set functions
+
+// set bit at idx
+void set_bit(bitarray *bit_array, size_t idx) {
+  assert(bit_array);
+  assert(bit_array->array && bit_array->size > 0);
+  assert(idx >= 0 && idx < bit_array->size);
+
+  // array index where bit at idx lives
+  size_t array_idx = idx / BITS_PER_EL;
+
+  // position of bit at array index/value
+  uint8_t offset = idx % BITS_PER_EL;
+
+  // OR array value in-place with 1 leftshifted by offset (will set the bit)
+  bit_array->array[array_idx] |= (((ARRAY_TYPE)1) << offset);
+  assert(get_bit(bit_array, idx));
+}
+
+// set bits in range [from, to) to "true"
+void set_bit_range(bitarray *bit_array, size_t from, size_t to) {
+  assert(bit_array);
+  assert(bit_array->array && bit_array->size > 0);
+
+  // if the size of the bitarray is <= BITS_PER_EL,
+  // there is no more efficient way than to iterate
+  // over evey bit position and to set it
+  if (bit_array->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      set_bit(bit_array, i);
+    }
+    return;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+  for (size_t i = from; i < end_idx_from; i++) {
+    set_bit(bit_array, i);
+  }
+
+  // set entire array value (BITS_PER_EL bits) to "true"
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    bit_array->array[i] = ARRAY_TYPE_MAX;
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
+    set_bit(bit_array, i);
+  }
+
+  assert(count_bit_range(bit_array, from, to) == (from - to));
+}
+
+// set all bits to "true"
+void set_all_bits(bitarray *bit_array) {
+  assert(bit_array);
+  assert(bit_array->array && bit_array->size > 0);
+
+  for (size_t i = 0; i < bit_array->_array_size; i++) {
+    bit_array->array[i] = ARRAY_TYPE_MAX;
+  }
+
+  assert(count_bits(bit_array) == bit_array->size);
+}
+
+// flip/invert functions
+
+// flip/invert bit at idx
+void flip_bit(bitarray *bit_array, size_t idx) {
+  assert(bit_array);
+  assert(bit_array->array && bit_array->size > 0);
+  assert(idx >= 0 && idx < bit_array->size);
+
+  // array index where bit at idx lives
+  size_t array_idx = idx / BITS_PER_EL;
+
+  // position of bit at array index/value
+  uint8_t offset = idx % BITS_PER_EL;
+
+  // XOR array value in-place with 1 leftshifted by offset
+  // (will flip the bit)
+  bit_array->array[array_idx] ^= (((ARRAY_TYPE)1) << offset);
+}
+
+// flip/invert bits in range [from, to]
+void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
+  assert(bit_array);
+  assert(bit_array->array && bit_array->size > 0);
+
+  // if the size of the bitarray is <= BITS_PER_EL,
+  // there is no more efficient way than to iterate
+  // over evey bit position and to flip it
+  if (bit_array->size <= BITS_PER_EL) {
+    for (size_t i = from; i < to; i++) {
+      flip_bit(bit_array, i);
+    }
+    return;
+  }
+
+  // array index where bit at "from" lives
+  size_t array_idx_from = from / BITS_PER_EL;
+
+  // array index where bit at "to" lives
+  size_t array_idx_to = to / BITS_PER_EL;
+
+  // position of "from" bit at array index/value
+  uint8_t offset_from = from % BITS_PER_EL;
+
+  // position of "to" bit at array index/value
+  uint8_t offset_to = to % BITS_PER_EL;
+
+  size_t end_idx_from = from + (BITS_PER_EL - offset_from);
+  for (size_t i = from; i < end_idx_from; i++) {
+    flip_bit(bit_array, i);
+  }
+
+  // flip entire array value (BITS_PER_EL bits)
+  // without iterating over every bit position
+  for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
+    bit_array->array[i] = ~(bit_array->array[i]);
+  }
+
+  for (size_t i = to - offset_to; i < to; i++) {
+    flip_bit(bit_array, i);
+  }
+}
+
+// flip/invert all bits (~)
+void flip_all_bits(bitarray *bit_array) {
+  assert(bit_array);
+  assert(bit_array->array && bit_array->size > 0);
+
+  for (size_t i = 0; i < bit_array->_array_size; i++) {
+    bit_array->array[i] = ~(bit_array->array[i]);
+  }
+}
+
 // clear functions
 
+// clear bit at idx
 void clear_bit(bitarray *bit_array, size_t idx) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
@@ -270,6 +280,7 @@ void clear_bit(bitarray *bit_array, size_t idx) {
   assert(!get_bit(bit_array, idx));
 }
 
+// clear/reset bits to "false" in range [from, to)
 void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(bit_array);
   assert(bit_array->array && bit_array->size > 0);
@@ -314,6 +325,7 @@ void clear_bit_range(bitarray *bit_array, size_t from, size_t to) {
   assert(count_bit_range(bit_array, from, to) == 0);
 }
 
+// clear/reset all bits to "false"
 void clear_all_bits(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array && bit_array->_array_size > 0);
@@ -325,156 +337,10 @@ void clear_all_bits(bitarray *bit_array) {
   assert(count_bits(bit_array) == 0);
 }
 
-// bitwise operations (in-place)
-
-void and_bits_inplace(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  if (left->size != right->size) {
-    printf("Cannot AND bitarrays that aren't the same size (%ld != %ld)\n",
-           left->size, right->size);
-    exit(1);
-  }
-
-  for (size_t i = 0; i < left->_array_size; i++) {
-    left->array[i] &= right->array[i];
-  }
-}
-
-void or_bits_inplace(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size == right->size);
-
-  if (left->size != right->size) {
-    printf("Cannot OR bitarrays that aren't the same size (%ld != %ld)\n",
-           left->size, right->size);
-    exit(1);
-  }
-
-  for (size_t i = 0; i < left->_array_size; i++) {
-    left->array[i] |= right->array[i];
-  }
-}
-
-void xor_bits_inplace(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  if (left->size != right->size) {
-    printf("Cannot XOR bitarrays that aren't the same size (%ld != %ld)\n",
-           left->size, right->size);
-    exit(1);
-  }
-
-  for (size_t i = 0; i < left->_array_size; i++) {
-    left->array[i] ^= right->array[i];
-  }
-}
-
-void not_bits_inplace(bitarray *bit_array) {
-  flip_all_bits(bit_array);
-}
-
-void right_shift_bits_inplace(bitarray *bit_array, size_t n) {
-  assert(bit_array && bit_array->size);
-  if (!n) return;
-
-  // FIXME
-}
-
-void left_shift_bits_inplace(bitarray *bit_array, size_t n) {
-  assert(bit_array && bit_array->size);
-  if (!n) return;
-
-  // FIXME
-}
-
-// bitwise operations
-bitarray* and_bits(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  if (left->size != right->size) {
-    printf("Cannot AND bitarrays that aren't the same size (%ld != %ld)\n",
-           left->size, right->size);
-    exit(1);
-  }
-
-  bitarray *b = copy_bitarray(left);
-
-  for (size_t i = 0; i < left->_array_size; i++) {
-    b->array[i] &= right->array[i];
-  }
-
-  return b;
-}
-
-bitarray* or_bits(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  if (left->size != right->size) {
-    printf("Cannot OR bitarrays that aren't the same size (%ld != %ld)\n",
-           left->size, right->size);
-    exit(1);
-  }
-
-  bitarray *b = copy_bitarray(left);
-
-  for (size_t i = 0; i < left->_array_size; i++) {
-    b->array[i] |= right->array[i];
-  }
-
-  return b;
-}
-
-bitarray* xor_bits(bitarray *left, bitarray *right) {
-  assert(left && right);
-  assert(left->size && right->size);
-
-  if (left->size != right->size) {
-    printf("Cannot XOR bitarrays that aren't the same size (%ld != %ld)\n",
-           left->size, right->size);
-    exit(1);
-  }
-
-  bitarray *b = copy_bitarray(left);
-
-  for (size_t i = 0; i < left->_array_size; i++) {
-    b->array[i] ^= right->array[i];
-  }
-
-  return b;
-}
-
-bitarray* not_bits(bitarray *bit_array) {
-  assert(bit_array && bit_array->size);
-
-  bitarray *b = copy_bitarray(bit_array);
-  flip_all_bits(b);
-
-  return b;
-}
-
-bitarray* right_shift_bits(bitarray *bit_array, size_t n) {
-  assert(bit_array && bit_array->size);
-
-  if (!n) return bit_array;
-
-  // FIXME
-}
-
-bitarray* left_shift_bits(bitarray *bit_array, size_t n) {
-  assert(bit_array && bit_array->size);
-
-  if (!n) return bit_array;
-
-  // FIXME
-}
-
 // copy functions
 
+// copy all bits from src to dest
+// (comparable to what you would expect "dest = src" to do)
 void copy_all_bits(bitarray *src, bitarray *dest) {
   assert(src && dest);
 
@@ -497,6 +363,8 @@ void copy_all_bits(bitarray *src, bitarray *dest) {
   dest->size = src->size;
 }
 
+// copy bits in range [from, to] from src to dest
+// (comparable to what you would expect "dest = src[from:to]" to do)
 void copy_bit_range(bitarray *src, bitarray *dest,
                     size_t from, size_t to) {
   assert(src && dest);
@@ -558,14 +426,196 @@ void copy_bit_range(bitarray *src, bitarray *dest,
   }
 }
 
-void append_all_bits(bitarray *src, bitarray *dest) {
-  assert(src && dest);
+// create bitarray that holds n_bits bits (all unset/false)
+bitarray* create_bitarray(size_t n_bits) {
+  size_t array_size = __bitarray_size(n_bits);
+  assert(array_size > 0);
+  bitarray *b = (bitarray*) malloc(sizeof(bitarray));
+  assert(b);
 
-  if (!(src->size)) return;
+  // zero-initialize the memory so every bit is set to 0
+  b->array = (ARRAY_TYPE*) calloc(array_size, TYPE_SIZE);
+  assert(b->array);
 
-  append_bit_range(src, dest, 0, src->size);
+  b->size = n_bits;
+  b->_array_size = array_size;
+
+  return b;
 }
 
+// copy bitarray
+bitarray* copy_bitarray(bitarray *bit_array) {
+  assert(bit_array && bit_array->size >= 0);
+
+  bitarray *b = create_bitarray(bit_array->size);
+  copy_all_bits(bit_array, b);
+
+  return b;
+}
+
+// bitwise operations (in-place)
+
+// perform bitwise AND (&=) on left bitarray in-place
+void and_bits_inplace(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  if (left->size != right->size) {
+    printf("Cannot AND bitarrays that aren't the same size (%ld != %ld)\n",
+           left->size, right->size);
+    exit(1);
+  }
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    left->array[i] &= right->array[i];
+  }
+}
+
+// perform bitwise OR (|=) on left bitarray in-place
+void or_bits_inplace(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size == right->size);
+
+  if (left->size != right->size) {
+    printf("Cannot OR bitarrays that aren't the same size (%ld != %ld)\n",
+           left->size, right->size);
+    exit(1);
+  }
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    left->array[i] |= right->array[i];
+  }
+}
+
+// perform bitwise XOR (^=) on left bitarray in-place
+void xor_bits_inplace(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  if (left->size != right->size) {
+    printf("Cannot XOR bitarrays that aren't the same size (%ld != %ld)\n",
+           left->size, right->size);
+    exit(1);
+  }
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    left->array[i] ^= right->array[i];
+  }
+}
+
+// perform NOT (~) on bitarray in-place
+// (same functionality as flip_all_bits function)
+void not_bits_inplace(bitarray *bit_array) {
+  flip_all_bits(bit_array);
+}
+
+// perform rightshift (>>=) on bitarray in-place
+void right_shift_bits_inplace(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+  if (!n) return;
+
+  // FIXME
+}
+
+// perform left shift (<<=) in bitarray in-place
+void left_shift_bits_inplace(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+  if (!n) return;
+
+  // FIXME
+}
+
+// bitwise operations
+
+// perform bitwise AND (&) and write result to a new bitarray
+bitarray* and_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  if (left->size != right->size) {
+    printf("Cannot AND bitarrays that aren't the same size (%ld != %ld)\n",
+           left->size, right->size);
+    exit(1);
+  }
+
+  bitarray *b = copy_bitarray(left);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    b->array[i] &= right->array[i];
+  }
+
+  return b;
+}
+
+// perform bitwise OR (|) and write result to a new bitarray
+bitarray* or_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  if (left->size != right->size) {
+    printf("Cannot OR bitarrays that aren't the same size (%ld != %ld)\n",
+           left->size, right->size);
+    exit(1);
+  }
+
+  bitarray *b = copy_bitarray(left);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    b->array[i] |= right->array[i];
+  }
+
+  return b;
+}
+
+// perform bitwise XOR (^) and write result to a new bitarray
+bitarray* xor_bits(bitarray *left, bitarray *right) {
+  assert(left && right);
+  assert(left->size && right->size);
+
+  if (left->size != right->size) {
+    printf("Cannot XOR bitarrays that aren't the same size (%ld != %ld)\n",
+           left->size, right->size);
+    exit(1);
+  }
+
+  bitarray *b = copy_bitarray(left);
+
+  for (size_t i = 0; i < left->_array_size; i++) {
+    b->array[i] ^= right->array[i];
+  }
+
+  return b;
+}
+
+// returns a copy of bit_array flipped (~)
+bitarray* not_bits(bitarray *bit_array) {
+  assert(bit_array && bit_array->size);
+
+  bitarray *b = copy_bitarray(bit_array);
+  flip_all_bits(b);
+
+  return b;
+}
+
+// returns a copy of bit_array rightshifted (>>) by n
+bitarray* right_shift_bits(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+
+  if (!n) return bit_array;
+
+  // FIXME
+}
+
+// returns a copy of bit_array leftshifted (>>) by n
+bitarray* left_shift_bits(bitarray *bit_array, size_t n) {
+  assert(bit_array && bit_array->size);
+
+  if (!n) return bit_array;
+
+  // FIXME
+}
+
+// appends bits in range [from, to] from src to dest
 void append_bit_range(bitarray *src, bitarray *dest,
                       size_t from, size_t to) {
   assert(src && dest);
@@ -591,33 +641,16 @@ void append_bit_range(bitarray *src, bitarray *dest,
   }
 }
 
-bitarray* copy_bitarray(bitarray *bit_array) {
-  assert(bit_array && bit_array->size >= 0);
+// appends all bits from src to dest
+void append_all_bits(bitarray *src, bitarray *dest) {
+  assert(src && dest);
 
-  bitarray *b = create_bitarray(bit_array->size);
-  copy_all_bits(bit_array, b);
+  if (!(src->size)) return;
 
-  return b;
+  append_bit_range(src, dest, 0, src->size);
 }
 
-// "constructor" functions
-
-bitarray* create_bitarray(size_t n_bits) {
-  size_t array_size = __bitarray_size(n_bits);
-  assert(array_size > 0);
-  bitarray *b = (bitarray*) malloc(sizeof(bitarray));
-  assert(b);
-
-  // zero-initialize the memory so every bit is set to 0
-  b->array = (ARRAY_TYPE*) calloc(array_size, TYPE_SIZE);
-  assert(b->array);
-
-  b->size = n_bits;
-  b->_array_size = array_size;
-
-  return b;
-}
-
+// create bitarray that holds n_bits bits (all set/true)
 bitarray* create_set_bitarray(size_t n_bits) {
   size_t array_size = __bitarray_size(n_bits);
   assert(array_size > 0);
@@ -638,6 +671,7 @@ bitarray* create_set_bitarray(size_t n_bits) {
   return b;
 }
 
+// create bitarray from string (must consist only of 0 and 1)
 bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
   size_t array_size = __bitarray_size(str_len);
   assert(array_size > 0);
@@ -662,6 +696,7 @@ bitarray* create_bitarray_from_str(const char *str, size_t str_len) {
   return b;
 }
 
+// create bitarray from number
 bitarray* create_bitarray_from_num(ARRAY_TYPE num) {
   bitarray *b = (bitarray*) malloc(sizeof(bitarray));
   assert(b);
@@ -677,6 +712,7 @@ bitarray* create_bitarray_from_num(ARRAY_TYPE num) {
   return b;
 }
 
+// convert bitarray (with max size of BITS_PER_EL bits) to number
 ARRAY_TYPE convert_bitarray_to_num(bitarray* bit_array) {
   assert(bit_array);
   assert(bit_array->size > 0 && bit_array->size <= BITS_PER_EL);
@@ -684,6 +720,8 @@ ARRAY_TYPE convert_bitarray_to_num(bitarray* bit_array) {
 }
 
 // "destructor" functions
+
+// delete bitarray and free allocated memory
 void delete_bitarray(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array);
@@ -691,6 +729,7 @@ void delete_bitarray(bitarray *bit_array) {
   free(bit_array);
 }
 
+// print each bit of the bitarray (idx 0 will be rightmost bit)
 void print_bitarray(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array);
@@ -701,6 +740,9 @@ void print_bitarray(bitarray *bit_array) {
   printf("\n");
 }
 
+// create a string from the bitarray;
+// idx 0 will be rightmost bit
+// (don't forget to free it at then end)
 char* create_str_from_bitarray(bitarray *bit_array) {
   assert(bit_array);
   assert(bit_array->array);
@@ -719,6 +761,7 @@ char* create_str_from_bitarray(bitarray *bit_array) {
   return str;
 }
 
+// check if bits of left and right are equal (must be same size)
 bool equal_bits(bitarray *left, bitarray *right) {
   assert(left && right);
   assert(left->size == right->size);
