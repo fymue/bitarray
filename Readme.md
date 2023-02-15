@@ -1,17 +1,19 @@
-# bitarray
+# C bitarray implementation
 
 ## About
 
 Dynamic bitarray implementation written in C.
+
 This bitarray/bitset implementation supports plenty of bitarray-relevant features, such as 
 - clearing/setting bit (ranges)
-- fast counting of set bits (in range)
+- fast counting of set bits in a range or the entire bitarray
 - `&` (AND), `|` (OR), `^` (XOR), `~` (NOT), `>>` (RIGHT SHIFT) and `<<` (LEFT SHIFT) on bitarrays
-- converting a (unsigned) number to a bitarray for easy bit manipulation (and back to a number)
+- converting an (unsigned) number/string to a bitarray for easy bit manipulation
+- converting a bitarray into a number or string
 
 amongst others.
 
-Unlike e.g. `std::bitset`, this bitarray implementation is dynamic, meaning the size of a bitarray doesn't need to be known at compile-time, which allows for some more flexibility.
+Unlike e.g. C++'s `std::bitset`, this bitarray implementation is dynamic, meaning the size of a bitarray doesn't need to be known at compile-time, which allows for some more flexibility.
 
 ## Installation/Usage
 
@@ -66,7 +68,7 @@ Again, make sure to include the `libbitarray.h` header file at the top of your m
 
 By default, no bounds checking is performed in any of the functions to ensure maximum speed/performance. However, if you compile/link using the `Makefile` targets `debug` instead of `default` or `debug_shared` instead of `shared`, `assert` statements will be triggered if you attempt to access an out-of-bounds bit.
 
-You can also run a small test program to check if everything works by executing the command
+You can also run a small but thorough test program to check if everything works by executing the command
  
 ```
 make test && ./test
