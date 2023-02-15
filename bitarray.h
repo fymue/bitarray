@@ -8,12 +8,23 @@
 #include <string.h>
 #include <assert.h>
 
+// 32 bit
+// #define ARRAY_TYPE uint32_t
+// #define ARRAY_TYPE_MAX UINT32_MAX
+// #define TYPE_SIZE sizeof(ARRAY_TYPE)
+// #define BITS_PER_EL (TYPE_SIZE * 8)
+// #define MASK_1 1U
+// #define pop_count __builtin_popcount
+
+// 64 bit
 #define ARRAY_TYPE uint64_t
 #define ARRAY_TYPE_MAX UINT64_MAX
 #define TYPE_SIZE sizeof(ARRAY_TYPE)
 #define BITS_PER_EL (TYPE_SIZE * 8)
+#define MASK_1 1UL
+#define pop_count __builtin_popcountl
 
-typedef struct _bit_array {
+typedef struct {
   size_t size;         // number of bits this bitarray contains
   size_t _array_size;  // number of elements the underlying array contains
   ARRAY_TYPE *array;   // pointer to the start of the array
@@ -176,7 +187,7 @@ bool get_bit(bitarray *bit_array, size_t idx) {
   // left-shift 1 by offset and AND it with array value
   // if the bit is set, this will result in a positive number (==true)
   // if not, this will result i 0 (==false)
-  return bit_array->array[array_idx] & (((ARRAY_TYPE)1) << offset);
+  return bit_array->array[array_idx] & (MASK_1 << offset);
 }
 
 // set functions
@@ -193,7 +204,7 @@ void set_bit(bitarray *bit_array, size_t idx) {
   uint8_t offset = idx % BITS_PER_EL;
 
   // OR array value in-place with 1 leftshifted by offset (will set the bit)
-  bit_array->array[array_idx] |= (((ARRAY_TYPE)1) << offset);
+  bit_array->array[array_idx] |= (MASK_1 << offset);
   assert(get_bit(bit_array, idx));
 }
 
@@ -278,7 +289,7 @@ void flip_bit(bitarray *bit_array, size_t idx) {
 
   // XOR array value in-place with 1 leftshifted by offset
   // (will flip the bit)
-  bit_array->array[array_idx] ^= (((ARRAY_TYPE)1) << offset);
+  bit_array->array[array_idx] ^= (MASK_1 << offset);
 }
 
 void flip_bit_range(bitarray *bit_array, size_t from, size_t to) {
@@ -349,7 +360,7 @@ size_t count_bits(bitarray *bit_array) {
   size_t count = 0;
   for (size_t i = 0; i < bit_array->_array_size; i++) {
     // use machine-optimized popcount function for max speed
-    count += __builtin_popcountll(bit_array->array[i]);
+    count += pop_count(bit_array->array[i]);
   }
 
   return count;
@@ -388,10 +399,10 @@ size_t count_bit_range(bitarray *bit_array, size_t from, size_t to) {
     count += get_bit(bit_array, i);
   }
 
-  // get popcount entire array value
+  // get popcount of entire array value
   // without iterating over every bit position
   for (size_t i = array_idx_from + 1; i < array_idx_to; i++) {
-    count += __builtin_popcountll(bit_array->array[i]);
+    count += pop_count(bit_array->array[i]);
   }
 
   for (size_t i = to - offset_to; i < to; i++) {
@@ -416,7 +427,7 @@ void clear_bit(bitarray *bit_array, size_t idx) {
 
   // AND array value in-place with 1 leftshifted by offset FLIPPED
   // (the flip turns 100000 int 011111, which will clear the 0 bit after AND)
-  bit_array->array[array_idx] &= ~(((ARRAY_TYPE)1) << offset);
+  bit_array->array[array_idx] &= ~(MASK_1 << offset);
   assert(!get_bit(bit_array, idx));
 }
 
@@ -529,16 +540,40 @@ void not_bits_inplace(bitarray *bit_array) {
 
 void right_shift_bits_inplace(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
+  assert(n <= bit_array->size);
   if (!n) return;
 
-  // FIXME
+  // probably not the most efficient way of doing it,
+  // but simply append the bits after the shift to a new (cleared) bitarray
+  // and swap the array ptr of the input bitarray
+  bitarray *tmp = create_bitarray(bit_array->size);
+  tmp->size = 0;
+  append_bit_range(bit_array, tmp, n, bit_array->size);
+
+  ARRAY_TYPE *old = bit_array->array;
+  bit_array->array = tmp->array;
+
+  free(old);
+  free(tmp);
 }
 
 void left_shift_bits_inplace(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
+  assert(n <= bit_array->size);
   if (!n) return;
 
-  // FIXME
+  // probably not the most efficient way of doing it,
+  // but simply append the bits after the shift to a new (cleared) bitarray
+  // and swap the array ptr of the input bitarray
+  bitarray *tmp = create_bitarray(bit_array->size);
+  tmp->size = n;
+  append_bit_range(bit_array, tmp, 0, bit_array->size - n);
+
+  ARRAY_TYPE *old = bit_array->array;
+  bit_array->array = tmp->array;
+
+  free(old);
+  free(tmp);
 }
 
 // bitwise operations
@@ -610,18 +645,27 @@ bitarray* not_bits(bitarray *bit_array) {
 
 bitarray* right_shift_bits(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
-
+  assert(n <= bit_array->size);
   if (!n) return bit_array;
 
-  // FIXME
+  bitarray *b = create_bitarray(bit_array->size);
+  b->size = 0;
+  append_bit_range(bit_array, b, n, bit_array->size);
+  b->size += n;
+
+  return b;
 }
 
 bitarray* left_shift_bits(bitarray *bit_array, size_t n) {
   assert(bit_array && bit_array->size);
-
+  assert(n <= bit_array->size);
   if (!n) return bit_array;
 
-  // FIXME
+  bitarray *b = create_bitarray(bit_array->size);
+  b->size = n;
+  append_bit_range(bit_array, b, 0, bit_array->size - n);
+
+  return b;
 }
 
 // copy functions
