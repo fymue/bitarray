@@ -22,7 +22,8 @@ This repo provides **three** installation methods:
 You can directly include `bitarray.h` into your `.c` file as a header-only "library". Simply add `#include "bitarray.h"` at the top of your `.c` file and compile it:
 
 ```
-gcc -o mybinary -I/path/to/dir/of/bitarray.h main.c
+BIT_ARRAY_PATH=/path/to/this/repo
+gcc -o mybinary -I$BIT_ARRAY_PATH main.c
 ```
 
 It is recommended to also add the `-march=native` option to leverage optimized functions/assembly instructions for your specific machine.
@@ -38,8 +39,11 @@ make default
 which you can simply link/combine with your binary:
 
 ```
-gcc -o mybinary main.c path/to/bitarray.o
+BIT_ARRAY_PATH=/path/to/this/repo
+gcc -I$(BIT_ARRAY_PATH) -o mybinary main.c path/to/bitarray.o
 ```
+
+If you choose this method, make sure to include the `libbitarray.h` header file at the top of your main `.c` file instead of the `bitarray.h` header file to avoid linker errors.
 
 ### Method 3
 
@@ -49,20 +53,18 @@ The 3rd option is to create a shared library with the command
 make shared
 ```
 
-This will produce a `libbitarray.so` file, which you can link against:
+This will produce a `libbitarray.so` file, which you can link against.
+To avoid linker errors, make sure to add the path where the `libbitarray.so` file is located to the `LD_LIBRARY_PATH` variable.
 
 ```
-gcc -L/path/to/dir/of/libbitarray.so -o mybinary -lbitarray main.c
+export LD_LIBRARY_PATH=/path/to/dir/of/libbitarray.so:$LD_LIBRARY_PATH
+BIT_ARRAY_PATH=/path/to/this/repo
+gcc -L/path/to/dir/of/libbitarray.so -I$BIT_ARRAY_PATH -o mybinary -lbitarray main.c
 ```
 
-To avoid linker errors, make sure to add the path where the `libbitarray.so` file is located to the `LD_LIBRARY_PATH` variable and to export it.
+Again, make sure to include the `libbitarray.h` header file at the top of your main `.c` file instead of the `bitarray.h` header file to avoid linker errors.
 
-```
-LD_LIBRARY_PATH=/path/to/dir/of/libbitarray.so:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH
-```
-
-By default, no bounds checking is performed to ensure maximum speed/performance. However, if you compile/link using the `Makefile` targets `debug` instead of `default` or `debug_shared` instead of `shared`, `assert` statements will be triggered if you attempt to access an out-of-bounds bit.
+By default, no bounds checking is performed in any of the functions to ensure maximum speed/performance. However, if you compile/link using the `Makefile` targets `debug` instead of `default` or `debug_shared` instead of `shared`, `assert` statements will be triggered if you attempt to access an out-of-bounds bit.
 
 You can also run a small test program to check if everything works by executing the command
  
