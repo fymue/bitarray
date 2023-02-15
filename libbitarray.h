@@ -8,12 +8,23 @@
 #include <string.h>
 #include <assert.h>
 
+// 32 bit
+// #define ARRAY_TYPE uint32_t
+// #define ARRAY_TYPE_MAX UINT32_MAX
+// #define TYPE_SIZE sizeof(ARRAY_TYPE)
+// #define BITS_PER_EL (TYPE_SIZE * 8)
+// #define MASK_1 1U
+// #define pop_count __builtin_popcount
+
+// 64 bit
 #define ARRAY_TYPE uint64_t
 #define ARRAY_TYPE_MAX UINT64_MAX
 #define TYPE_SIZE sizeof(ARRAY_TYPE)
 #define BITS_PER_EL (TYPE_SIZE * 8)
+#define MASK_1 1UL
+#define pop_count __builtin_popcountl
 
-typedef struct _bit_array {
+typedef struct {
   size_t size;         // number of bits this bitarray contains
   size_t _array_size;  // number of elements the underlying array contains
   ARRAY_TYPE *array;   // pointer to the start of the array
